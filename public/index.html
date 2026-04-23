@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balaji Tutorials - AI Admission Assistant Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.demo-page {
+  text-align: center;
+  padding: 40px 20px;
+}
+.demo-logo {
+  width: 70px; height: 70px;
+  background: linear-gradient(135deg, #1a3a6b, #2d6bbf);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; color: white;
+}
+.demo-page h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; color: #1a3a6b;
+  margin-bottom: 8px;
+}
+.demo-page p { color: #666; font-size: 14px; line-height: 1.6; max-width: 320px; margin: 0 auto 24px; }
+.demo-arrow {
+  font-size: 13px; color: #2d6bbf;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  animation: arrow 1.5s infinite;
+}
+@keyframes arrow { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
+
+#vidya-bubble {
+  position: fixed; bottom: 24px; right: 24px; width: 58px; height: 58px;
+  background: linear-gradient(135deg, #1a3a6b, #2d6bbf);
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; box-shadow: 0 4px 20px rgba(26,58,107,0.45);
+  transition: transform 0.3s ease; z-index: 99999; border: none;
+}
+#vidya-bubble:hover { transform: scale(1.08); }
+#vidya-notif {
+  position: absolute; top: 3px; right: 3px; width: 13px; height: 13px;
+  background: #FF6B35; border-radius: 50%; border: 2px solid white;
+  animation: vidya-pulse 2s infinite;
+}
+@keyframes vidya-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.8} }
+#vidya-window {
+  position: fixed; bottom: 94px; right: 24px; width: 360px; height: 560px;
+  background: #FFFFFF; border-radius: 22px; display: flex; flex-direction: column;
+  overflow: hidden; z-index: 99998; border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  transform: scale(0.85) translateY(20px); opacity: 0; pointer-events: none;
+  transform-origin: bottom right;
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+}
+#vidya-window.vidya-open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+.vidya-header {
+  background: linear-gradient(135deg, #1a3a6b, #2d6bbf);
+  padding: 16px 18px; display: flex; align-items: center; gap: 11px; flex-shrink: 0;
+}
+.vidya-avatar {
+  width: 42px; height: 42px; background: rgba(255,255,255,0.2);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-size: 17px; color: white;
+  border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0;
+}
+.vidya-hname { font-family: 'Playfair Display', serif; font-size: 15px; color: white; font-weight: 500; }
+.vidya-hstatus { font-size: 11px; color: rgba(255,255,255,0.75); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.vidya-dot { width: 6px; height: 6px; background: #7FE87F; border-radius: 50%; animation: vidya-pulse 2s infinite; }
+.vidya-brand { font-size: 10px; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.12); padding: 3px 9px; border-radius: 20px; margin-left: auto; }
+.vidya-msgs {
+  flex: 1; overflow-y: auto; padding: 16px 14px; display: flex;
+  flex-direction: column; gap: 10px; scroll-behavior: smooth; background: #F8F9FC;
+}
+.vidya-msgs::-webkit-scrollbar { width: 3px; }
+.vidya-msgs::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+.vidya-msg { display: flex; gap: 7px; max-width: 88%; animation: vidya-msgin 0.3s ease; }
+@keyframes vidya-msgin { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+.vidya-msg.vidya-user { align-self: flex-end; flex-direction: row-reverse; }
+.vidya-mavatar {
+  width: 28px; height: 28px; border-radius: 50%; background: #E8EEF8;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0; margin-top: auto;
+  font-family: 'Playfair Display', serif; color: #1a3a6b;
+}
+.vidya-msg.vidya-user .vidya-mavatar { background: #FFF0EB; color: #FF6B35; }
+.vidya-mbubble {
+  padding: 10px 14px; border-radius: 17px; font-size: 13px;
+  line-height: 1.6; color: #2C2C2C; font-family: 'DM Sans', sans-serif; white-space: pre-wrap;
+}
+.vidya-msg.vidya-bot .vidya-mbubble { background: white; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.vidya-msg.vidya-user .vidya-mbubble { background: linear-gradient(135deg, #1a3a6b, #2d6bbf); color: white; border-bottom-right-radius: 4px; }
+.vidya-mwrap { display: flex; flex-direction: column; }
+.vidya-mwrap.vidya-right { align-items: flex-end; }
+.vidya-mtime { font-size: 9px; color: #aaa; margin-top: 3px; padding: 0 4px; }
+.vidya-typing { display: flex; gap: 7px; align-items: flex-end; }
+.vidya-tdots { background: white; padding: 11px 15px; border-radius: 17px; border-bottom-left-radius: 4px; display: flex; gap: 4px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.vidya-tdots span { width: 5px; height: 5px; background: #2d6bbf; border-radius: 50%; animation: vidya-bounce 1.2s infinite; }
+.vidya-tdots span:nth-child(2){animation-delay:0.2s}
+.vidya-tdots span:nth-child(3){animation-delay:0.4s}
+@keyframes vidya-bounce { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-5px);opacity:1} }
+.vidya-qr { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 14px 10px; flex-shrink: 0; background: #F8F9FC; }
+.vidya-qrbtn { font-family: 'DM Sans', sans-serif; font-size: 11.5px; padding: 6px 12px; border-radius: 20px; border: 1px solid #2d6bbf; background: white; color: #1a3a6b; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+.vidya-qrbtn:hover { background: #2d6bbf; color: white; }
+.vidya-inputarea { padding: 10px 14px 14px; border-top: 1px solid rgba(0,0,0,0.07); background: white; flex-shrink: 0; }
+.vidya-inputrow { display: flex; gap: 8px; align-items: flex-end; background: #F8F9FC; border-radius: 22px; padding: 7px 7px 7px 14px; border: 1px solid rgba(0,0,0,0.08); transition: border-color 0.2s; }
+.vidya-inputrow:focus-within { border-color: #2d6bbf; }
+#vidya-input { flex: 1; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #2C2C2C; outline: none; resize: none; max-height: 72px; line-height: 1.5; }
+#vidya-input::placeholder { color: #aaa; }
+#vidya-send { width: 34px; height: 34px; background: linear-gradient(135deg, #1a3a6b, #2d6bbf); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; }
+#vidya-send:hover { transform: scale(1.08); }
+#vidya-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.vidya-powered { text-align: center; font-size: 9.5px; color: #bbb; margin-top: 6px; font-family: 'DM Sans', sans-serif; }
+.vidya-powered span { color: #2d6bbf; }
+@media(max-width:480px) {
+  #vidya-window { width: calc(100vw - 28px); right: 14px; bottom: 84px; height: 65vh; }
+  #vidya-bubble { right: 14px; bottom: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="demo-page">
+  <div class="demo-logo">B</div>
+  <h1>Balaji Tutorials</h1>
+  <p>20 saal se Indore ka bharosemand coaching institute. Admission ke liye Vidya se baat karein!</p>
+  <div class="demo-arrow">
+    Vidya se baat karein →
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2d6bbf" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </div>
+</div>
+
+<button id="vidya-bubble" onclick="vidyaToggle()" aria-label="Chat with Vidya">
+  <div id="vidya-notif"></div>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/>
+  </svg>
+</button>
+
+<div id="vidya-window">
+  <div class="vidya-header">
+    <div class="vidya-avatar">V</div>
+    <div>
+      <div class="vidya-hname">Vidya</div>
+      <div class="vidya-hstatus"><div class="vidya-dot"></div>Online · Admission queries ke liye ready</div>
+    </div>
+    <div class="vidya-brand">Balaji Tutorials</div>
+  </div>
+  <div class="vidya-msgs" id="vidya-msgs"></div>
+  <div class="vidya-qr" id="vidya-qr">
+    <button class="vidya-qrbtn" onclick="vidyaQuick('Courses aur fees kya hain?')">📚 Courses & Fees</button>
+    <button class="vidya-qrbtn" onclick="vidyaQuick('Batch timings kya hain?')">⏰ Timings</button>
+    <button class="vidya-qrbtn" onclick="vidyaQuick('Admission kaise hoga?')">✅ Admission</button>
+    <button class="vidya-qrbtn" onclick="vidyaQuick('Demo class milegi kya?')">🎓 Demo Class</button>
+    <button class="vidya-qrbtn" onclick="vidyaQuick('NEET coaching ke baare mein batao')">🏥 NEET</button>
+    <button class="vidya-qrbtn" onclick="vidyaQuick('Fees mein kya included hai?')">💰 Fees Detail</button>
+  </div>
+  <div class="vidya-inputarea">
+    <div class="vidya-inputrow">
+      <textarea id="vidya-input" placeholder="Kuch bhi puchho admission ke baare mein..." rows="1"
+        onkeydown="vidyaKey(event)" oninput="vidyaResize(this)"></textarea>
+      <button id="vidya-send" onclick="vidyaSend()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="vidya-powered">Powered by <span>Balaji Tutorials AI</span></div>
+  </div>
+</div>
+
+<script>
+var vidyaOpen = false;
+var vidyaBusy = false;
+var vidyaHistory = [];
+var vidyaWelcomed = false;
+var VIDYA_API = 'https://balaji-chatbot.vercel.app/api/chat';
+
+function vidyaToggle() {
+  vidyaOpen = !vidyaOpen;
+  document.getElementById('vidya-window').classList.toggle('vidya-open', vidyaOpen);
+  document.getElementById('vidya-notif').style.display = 'none';
+  if (vidyaOpen && !vidyaWelcomed) {
+    vidyaWelcomed = true;
+    setTimeout(function() {
+      vidyaAddMsg('bot', 'Namaste! 🎓 Main Vidya hun, Balaji Tutorials ki admission assistant.\n\nCourses, fees, batch timings, admission — kuch bhi puchho, main help karungi!');
+    }, 400);
+  }
+  if (vidyaOpen) setTimeout(function(){ document.getElementById('vidya-input').focus(); }, 350);
+}
+
+function vidyaAddMsg(role, text) {
+  var c = document.getElementById('vidya-msgs');
+  var now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  var wrap = document.createElement('div');
+  wrap.className = 'vidya-mwrap' + (role==='user' ? ' vidya-right' : '');
+  var msg = document.createElement('div');
+  msg.className = 'vidya-msg vidya-' + (role==='user'?'user':'bot');
+  var av = document.createElement('div');
+  av.className = 'vidya-mavatar';
+  av.textContent = role==='bot'?'V':'U';
+  var bub = document.createElement('div');
+  bub.className = 'vidya-mbubble';
+  bub.textContent = text;
+  msg.appendChild(av); msg.appendChild(bub);
+  var t = document.createElement('div');
+  t.className = 'vidya-mtime'; t.textContent = now;
+  wrap.appendChild(msg); wrap.appendChild(t);
+  c.appendChild(wrap);
+  c.scrollTop = c.scrollHeight;
+}
+
+function vidyaShowTyping() {
+  var c = document.getElementById('vidya-msgs');
+  var d = document.createElement('div');
+  d.className='vidya-typing'; d.id='vidya-typing';
+  d.innerHTML='<div class="vidya-mavatar">V</div><div class="vidya-tdots"><span></span><span></span><span></span></div>';
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+
+function vidyaHideTyping() {
+  var el = document.getElementById('vidya-typing');
+  if(el) el.remove();
+}
+
+async function vidyaSend() {
+  var input = document.getElementById('vidya-input');
+  var text = input.value.trim();
+  if (!text || vidyaBusy) return;
+  input.value = ''; input.style.height = 'auto';
+  vidyaAddMsg('user', text);
+  document.getElementById('vidya-qr').style.display = 'none';
+  vidyaHistory.push({ role: 'user', content: text });
+  vidyaBusy = true;
+  document.getElementById('vidya-send').disabled = true;
+  vidyaShowTyping();
+  try {
+    var res = await fetch(VIDYA_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: vidyaHistory })
+    });
+    var data = await res.json();
+    var reply = data.reply || 'Kuch issue aa gaya, please dobara try karein.';
+    vidyaHistory.push({ role: 'assistant', content: reply });
+    vidyaHideTyping();
+    vidyaAddMsg('bot', reply);
+  } catch(e) {
+    vidyaHideTyping();
+    vidyaAddMsg('bot', 'Network issue lag raha hai. +91 9893053653 pe call karein ya dobara try karein.');
+  }
+  vidyaBusy = false;
+  document.getElementById('vidya-send').disabled = false;
+}
+
+function vidyaQuick(t) { document.getElementById('vidya-input').value=t; vidyaSend(); }
+function vidyaKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vidyaSend();} }
+function vidyaResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,72)+'px'; }
+</script>
+</body>
+</html>

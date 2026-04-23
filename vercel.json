@@ -4,5 +4,11 @@
     "api/chat.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/public/index.html"
+    }
+  ]
 }
